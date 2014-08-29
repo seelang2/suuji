@@ -1,0 +1,3 @@
+# Fix SVG mime type
+# ref: http://www.ivanthevariable.com/fixing-svg-mime-type-errors/
+AddType image/svg+xml svg

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+    <widget xmlns = "http://www.w3.org/ns/widgets"
+
+        xmlns:gap   = "http://phonegap.com/ns/1.0"
+        id          = "com.cll-suuji.example"
+        version     = "0.0.1"
+        versionCode = "10" >
+
+        <!-- versionCode is optional and Android only -->
+
+        <preference name="phonegap-version" value="3.5.0" />
+
+        <name>Suuji</name>
+
+        <description>
+        A dynamic flashcard-type app for practicing Japanese numbers.
+        </description>
+
+        <author href="http://sitebabble.com" email="chris@sitebabble.com">
+        Chris Langtiw
+        </author>
+
+    </widget>

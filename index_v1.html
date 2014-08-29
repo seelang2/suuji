@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="UTF-8" />
+	<title>数字 Suuji: Japanese Number Drill</title>
+	<meta name="description" content="A simple flashcard app for practicing spoken japanese numbers." />
+	<meta name="author" content="Chris Langtiw" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <!--
+    <link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Averia+Sans+Libre:700' />
+	<link href="style.css" rel="stylesheet" type="text/css" />
+	-->
+	<style type="text/css">
+	/* reset box model */
+	*, *:before, *:after {
+	  -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;
+	 }
+
+ 	html, body, #wrapper { height: 100%; } /* set up full height layout */
+
+	body {
+		font-family: Verdana, Arial, sans-serif;
+		color: #000;
+		background: #ccc;
+		margin: 0;
+		padding: 5px 2%;
+	}
+
+	#wrapper {
+		border: 3px solid #08210A;
+		border-radius: 10px;
+		margin: auto;
+		/* background: #FFE678; */
+		background: url(img/tatami1.jpg);
+	}
+
+	#wrapper > header,
+	#wrapper  > footer,
+	#content {
+		padding: 1px 0;
+	}
+
+	#wrapper > header { 
+		height: 20%;
+		/* background: #f00; */
+		background: rgba(15,66,20,0.8);
+		border-radius: 8px 8px 0 0;
+		padding: 10px;
+	}
+
+	#wrapper > footer { 
+		font-size: 85%;
+		height: 10%;
+		/* background: #0f0; */
+		background: rgba(15,66,20,0.8);
+		color: #efefef;
+		border-radius: 0 0 8px 8px;
+		padding: 1px 1em;
+	}
+
+	#content {
+		padding: 1px 1%;
+		height: 70%;
+		background: rgba(255,255,255,0.2);
+	}
+
+	#wrapper > header nav { 
+		float: right; 
+	}
+
+	#wrapper > header nav img { 
+		width: 30px; 
+	}
+
+	#wrapper > footer nav { display: none; }
+
+	.page {
+		height: 80%;
+		padding: 1px 0;
+		display: none;
+		/* overflow-y: scroll; */
+	}
+
+	.question {
+		height: 50%;
+
+	}
+
+	.answer {
+		height: 50%;
+
+	}
+
+	#controls {
+		height: 20%;
+		padding: 10px 0;
+		text-align: center;
+	}
+
+	#controls .btnShowAnswer,
+	#controls .btnBack,
+	#controls .btnStats,
+	#controls .btnNext,
+	#controls .btnQuit {
+		display: none;
+	}
+
+	.centertext { text-align: center; }
+
+	button {
+		font-size: 85%;
+		width: 48%;
+		text-align: center;
+		border: 1px solid #999;
+		padding: 6px;
+		border-radius: 5px;
+		background: #efefef;
+		font-family: Helvetica, Arial, sans-serif;
+
+	}
+
+	#wrapper > header h1 {
+		text-align: center;
+		color: #fff;
+		text-shadow: 1px 1px #333;
+		margin: 0;
+	}
+
+	.question, .answer {
+		font-size: 120%;
+		text-align: center;
+		padding: 1px 0;
+		font-weight: normal;
+	}
+
+	p {
+		margin: 0.5em 0;
+	}
+
+	@media screen and (min-width: 1000px) {
+		button {
+			font-size: 130%;
+			width: 20%;
+			text-align: center;
+			border: 1px solid #999;
+			padding: 10px;
+			border-radius: 10px;
+			background: #efefef;
+			font-family: Helvetica, Arial, sans-serif;
+		}
+
+		.question, .answer {
+			font-size: 160%;
+			text-align: center;
+			padding: 1px 0;
+		}
+
+	}
+
+	@media screen and (min-width: 600px) {
+		body {
+			font-family: Verdana, Arial, sans-serif;
+			color: #000;
+			background: #ccc;
+			margin: 0;
+			padding: 25px 2%;
+		}
+
+		button {
+			font-size: 120%;
+			width: 25%;
+			text-align: center;
+			border: 1px solid #999;
+			padding: 10px;
+			border-radius: 10px;
+			background: #efefef;
+			font-family: Helvetica, Arial, sans-serif;
+		}
+
+		.question, .answer {
+			font-size: 160%;
+			text-align: center;
+			padding: 1px 0;
+		}
+
+	}
+	</style>
+
+</head>
+<body>
+<div id="wrapper">
+	<header>
+		<nav>
+			<img src="img/icon-menu.svg" onerror="this.src='img/icon-png2x.png'" />
+			<!--<img src="img/icon-menu.svg" />-->
+		</nav>
+		<section>
+			<h1>数字　<i>Sūji:</i> <span>Japanese Numbers Drill</span></h1>
+		</section>
+	</header>
+
+	<div id="content">
+		<section id="home" class="page">
+			<p>This is a simple flashcard app for practicing spoken number drills in Japanese. 
+				A number (up to five places) is presented in arabic or kanji. Press 'Show Answer' 
+				to see the answer in hiragana and romaji. Press 'Quit' to end.</p>
+		</section>
+
+		<section id="settings" class="page">
+			<form id="settingsform" action="#" method="get">
+				<h2>Question Display</h2>
+				<div>
+					<label>
+						<input type="radio" name="showK" value="0" checked />
+						<span>Arabic Numerals</span>
+					</label>
+				</div>
+				<div>
+					<label>
+						<input type="radio" name="showK" value="1" />
+						<span>Kanji Numerals</span>
+					</label>
+				</div>
+				<h2>Answer Display</h2>
+				<!--
+				<div>
+					<label>
+						<input type="checkbox" name="showH" value="1" checked />
+						<span>Show Hiragana</span>
+					</label>
+				</div>
+				-->
+				<div>
+					<label>
+						<input type="checkbox" name="showR" value="1" checked />
+						<span>Show Romaji (Hiragana is always shown)</span>
+					</label>
+				</div>
+			</form>
+		</section>
+
+		<section id="about" class="page">
+			<h2>About</h2>
+			<p>Author: Chris Langtiw <a href="http://www.sitebabble.com">www.sitebabble.com</a></p>
+			<p>Version: 0.9a</p>
+		</section>
+
+		<section id="stats" class="page">
+			<h1>Stats</h1>
+		</section>
+
+		<section id="menu" class="page showbuttons">
+			<h1>Menu</h1>
+			<div class="centertext">
+				<p><button class="btnSettings">Settings</button></p>
+				<p><button class="btnAbout">About</button></p>
+				<p><button class="btnStats">View Stats</button></p>
+			</div>
+		</section>
+
+		<section id="card" class="page">
+			<div class="question">
+				<p>Question Content</p>
+			</div>
+
+			<div class="answer">
+				<p>Answer Content</p>
+			</div>
+		</section>
+
+		<div id="controls">
+			<button class="btnBack">Back</button>
+			<button class="btnStart">Start</button>
+			<button class="btnShowAnswer">Show Answer</button>
+			<button class="btnNext">Next</button>
+			<button class="btnQuit">Quit</button>
+			<button class="btnStats">View Stats</button>
+		</div>
+
+	</div><!-- content -->
+
+	<footer>
+		<nav>
+			<ul>
+				<li>Link</li>
+				<li>Link</li>
+				<li>Link</li>
+				<li>Link</li>
+			</ul>
+		</nav>
+		<section class="alignleft">
+			<p>Copyright &copy; 2014 Crhsi Innovations LLC. All Rights Reserved.</p>
+		</section>
+	</footer>
+</div><!-- wrapper -->
+
+<script type="text/javascript" src="/lib/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+
+// simple plugin to support setting visibility
+(function($) {
+	$.fn.visible = function() {
+		return this.each(function() {
+			$(this).css('visibility','visible');
+		});
+	};
+
+	$.fn.invisible = function() {
+		return this.each(function() {
+			$(this).css('visibility','hidden');
+		});
+	};
+
+})(jQuery);
+
+</script>
+<script type="text/javascript">
+$(document).ready(function() {
+
+	// The number data, which corresponds to the number of places in the generated number array
+	// k = Kanji, h = Hiragana, r = Romaji
+	// zero is ignored because you wouldn't say the zero place
+	var data = [
+		[
+			{k:'',		h:'',			r:''},
+			{k:'一',		h:'いち',		r:'ichi'},
+			{k:'二',		h:'に',			r:'ni'},
+			{k:'三',		h:'さん',		r:'san'},
+			{k:'四',		h:'よん',		r:'yon'},
+			{k:'五',		h:'ご',			r:'go'},
+			{k:'六',		h:'ろく',		r:'roku'},
+			{k:'七',		h:'なな',		r:'nana'},
+			{k:'八',		h:'はち',		r:'hachi'},
+			{k:'九',		h:'きゅう',		r:'kyuu'}
+		],
+		[
+			{k:'',		h:'',			r:''},
+			{k:'十',		h:'じゅう',		r:'jyuu'},
+			{k:'二十',	h:'にじゅう',		r:'nijyuu'},
+			{k:'三十',	h:'さんじゅう',	r:'sanjyuu'},
+			{k:'四十',	h:'よんじゅう',	r:'yonjyuu'},
+			{k:'五十',	h:'ごじゅう',		r:'gojyuu'},
+			{k:'六十',	h:'ろくじゅう',	r:'rokujyuu'},
+			{k:'七十',	h:'ななじゅう',	r:'nanajyuu'},
+			{k:'八十',	h:'はちじゅう',	r:'hachijyuu'},
+			{k:'九十',	h:'きゅうじゅう',	r:'kyuujyuu'}
+		],
+		[
+			{k:'',		h:'',			r:''},
+			{k:'百',		h:'ひゃく',		r:'hyaku'},
+			{k:'二百',	h:'にひゃく',		r:'nihyaku'},
+			{k:'三百',	h:'さんびゃく',	r:'sanbyaku'},
+			{k:'四百',	h:'よんひゃく',	r:'yonhyaku'},
+			{k:'五百',	h:'ごひゃく',		r:'gohyaku'},
+			{k:'六百',	h:'ろっぴゃく',	r:'roppyaku'},
+			{k:'七百',	h:'ななひゃく',	r:'nanahyaku'},
+			{k:'八百',	h:'はっぴゃく',	r:'happyaku'},
+			{k:'九百',	h:'きゅうひゃく',	r:'kyuuhyaku'}
+		],
+		[
+			{k:'',		h:'',			r:''},
+			{k:'千',		h:'さん',		r:'sen'},
+			{k:'二千',	h:'にさん',		r:'nisen'},
+			{k:'三千',	h:'さんぜ',		r:'sanzen'},
+			{k:'四千',	h:'よんさん',		r:'yonsen'},
+			{k:'五千',	h:'ごさん',		r:'gosen'},
+			{k:'六千',	h:'ろくさん',		r:'rokusen'},
+			{k:'七千',	h:'ななさん',		r:'nanasen'},
+			{k:'八千',	h:'はっさん',		r:'hassen'},
+			{k:'九千',	h:'きゅうさん',	r:'kyuusen'}
+		],
+		[
+			{k:'',		h:'',			r:''},
+			{k:'万',		h:'いちま',		r:'ichiman'},
+			{k:'二万',	h:'にまん',		r:'niman'},
+			{k:'三万',	h:'さんまん',		r:'sanman'},
+			{k:'四万',	h:'よんまん',		r:'yonman'},
+			{k:'五万',	h:'ごまん',		r:'goman'},
+			{k:'六万',	h:'ろくまん',		r:'rokuman'},
+			{k:'七万',	h:'ななまん',		r:'nanaman'},
+			{k:'八万',	h:'はちまん',		r:'hachiman'},
+			{k:'九万',	h:'きゅうまん',	r:'kyuuman'}
+		]
+	];
+
+	var makeNewNumber = function() {
+		// generate new number as array of places between 1 to 5 places inclusive
+		// note that the array will be in reverse order (32767 -> [7,6,7,2,3])
+
+		// determine number of places
+		do {
+			var places = Math.abs(Math.floor((Math.random() * 10) - 4));				
+		} while (places == 0);
+
+		var numArray = [];
+
+		// generate random digit 0 - 9 for each place
+		for (var c = 0; c < places; c++) {
+			do {
+				var n = Math.abs(Math.floor((Math.random() * 10) - 4));
+			} while (c == (places - 1) && n == 0);
+
+			numArray.push(n);
+		}
+
+		return numArray; // return array
+	}; // makeNewNumber
+
+	var getNumberData = function() {
+		// generate a number. If the generated number is in the generator history regenerate
+		do {
+			var numArr = makeNewNumber();
+			var tmp = numArr.concat().reverse().join('');
+		} while (numberHistory.indexOf(tmp) != -1);
+
+		// maintain number history and prune when limit is reached
+		numberHistory.push(tmp);
+		if (numberHistory.length > settings.numberLimit) numberHistory.shift();
+
+		var numData = {};
+		numData.src = numArr;
+		numData.str = tmp;
+		numData.qK = '';
+		numData.ansR = '';
+		numData.ansH = '';
+
+		for (var c = 0; c < numArr.length; c++) {
+			//numData.str = numArr[c] + numData.str; // build number string
+			numData.qK = data[c][numArr[c]].k + numData.qK; // build kanji
+			numData.ansH = data[c][numArr[c]].h + ' ' + numData.ansH; // build hiragana
+			numData.ansR = data[c][numArr[c]].r + ' ' + numData.ansR; // build romaji
+		}
+
+		return numData;
+	}; // getNumberData
+
+	var showNewCard = function() {
+		var numData = getNumberData();
+
+		var text = settings.showK ? 
+			'<article>' + numData.qK + '</article>' : 
+			'<article>' + numData.str + '</article>';
+
+		$question
+			.empty()
+			.append(text)
+			.show();
+
+		text = '<p class="hiragana">' + numData.ansH + '</p>';
+		if (settings.showR) text += '<p class="romaji">' + numData.ansR + '</p>';
+
+		$answer
+			.empty()
+			.show()
+			.invisible()
+			.append(text);
+
+
+	}; // showNewCard
+
+	var showPage = function(page) {
+		// if we're already on the page do nothing
+		if ($page.history[$page.history.length - 1] == page) return;
+
+		// add page to history stack
+		$page.history.push(page);
+		// show page
+		$page.all
+			.hide()
+			.filter('#' + page)
+			.show();
+
+		// show buttons for page
+		$button.all
+			.hide()
+			.filter($button.map[page])
+			.show();
+
+	}; // showPage
+
+	var pageBack = function() {
+		// go back a page in the history
+		$page.history.pop(); // discard top of stack
+
+		showPage($page.history.pop()); // remove the new top of stack and pass it in to showPage to be re-added
+
+	}; // pageBack
+
+	// set up menu
+	$('	#wrapper > header nav')
+		.on('click', function() {
+			showPage('menu');
+
+		 });
+
+	// set up controls
+	$('#wrapper')
+		.on(
+			'click',
+			'button',
+			function(e) {
+				
+				switch(true) {
+					case $(this).hasClass('btnStart'):
+						showPage('card');
+					//break;
+					
+					case $(this).hasClass('btnNext'):
+						showNewCard();
+						$button.all
+							.filter('.btnNext')
+							.hide()
+							.end()
+							.filter('.btnShowAnswer')
+							.show();
+					break;
+					
+					case $(this).hasClass('btnSettings'):
+						// update form on page to reflect current settings before showing page
+						// first, remove all checked properties
+						$page.all
+							.filter('#settings')
+							.find(':checked')
+							.removeProp('checked');
+
+						// ...then reset them
+
+						/* // hiragana is always shown
+						if (settings.showH) {
+							$page.all
+								.filter('#settings')
+								.find('[name=showH]')
+								.prop('checked');
+						}
+						*/
+
+						if (settings.showR) {
+							$page.all
+								.filter('#settings')
+								.find('[name=showR]')
+								.prop('checked');
+						}
+
+						if (settings.showK) {
+							$page.all
+								.filter('#settings')
+								.find('[name=showK]')
+								.filter('[value=1]')
+								.prop('checked');
+						}
+
+						showPage('settings');
+					break;
+					
+					case $(this).hasClass('btnStats'):
+						showPage('stats');
+					break;
+					
+					case $(this).hasClass('btnAbout'):
+						showPage('about');
+					break;
+					
+					case $(this).hasClass('btnBack'):
+						// if we're on the settings page save form values
+						if ($page.history[$page.history.length - 1] == 'settings') {
+							//reset settings
+							settings.showK = 0;
+							//settings.showH = 0;
+							settings.showR = 0;
+
+							$('#settingsform')
+								.find(':checked')
+								.each(function() {
+									$this = $(this);
+									// using parseInt() to force numeric values
+									switch(true) {
+										case $this.attr('name') == 'showK':
+											settings.showK = parseInt($this.val());
+										break;
+										/*
+										case $this.attr('name') == 'showH':
+											settings.showH = parseInt($this.val());
+										break;
+										*/
+										case $this.attr('name') == 'showR':
+											settings.showR = parseInt($this.val());
+										break;
+									}
+								 });
+
+						}
+
+						pageBack();
+					break;
+					
+					case $(this).hasClass('btnShowAnswer'):
+						$answer.visible();
+						$button.all
+							.filter('.btnShowAnswer')
+							.hide()
+							.end()
+							.filter('.btnNext')
+							.show();
+					break;
+					
+					case $(this).hasClass('btnQuit'):
+						$page.history = []; // clear history
+						showPage('home'); // go to home page
+					break;
+					
+				}
+			}
+		 );
+
+	// init app
+	var $page = {};
+	$page.all = $('.page');
+	$page.history = []; // to track page history (top of stack is current page)
+
+	var $question = $('.question');
+	var $answer = $('.answer');
+
+	var $button = {};
+	$button.all = $('#controls button'); // get all buttons in control element
+	// map buttons to pages (as CSS selector string)
+	$button.map = {
+		home: 		'.btnStart',
+		menu: 		'.btnBack',
+		about: 		'.btnBack',
+		settings: 	'.btnBack',
+		stats: 		'.btnBack',
+		card: 		'.btnShowAnswer, .btnQuit'
+	}
+
+	var numberHistory = []; // array for tracking last x generated numbers, where x = settings.numberLimit
+
+	var settings = {
+		numberLimit: 	25, // track generated number history to avoid duplicates within set limit
+		showK: 			0,  // display Kanji in question
+		//showH: 			1,  // display hiragana answer
+		showR: 			1	// display romaji answer
+	};
+
+	showPage('home'); // show home page
+
+}); // document.ready
+
+// cleanup method to avoid memory leaks
+window.onunload = function() { $(document.body).remove(); };
+
+</script>
+
+</body>
+</html>
