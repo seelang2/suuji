@@ -2,8 +2,8 @@
     <widget xmlns = "http://www.w3.org/ns/widgets"
 
         xmlns:gap   = "http://phonegap.com/ns/1.0"
-        id          = "com.cll-suuji.example"
-        version     = "0.0.1"
+        id          = "com.cll-suuji.app"
+        version     = "0.3.0"
         versionCode = "10" >
 
         <!-- versionCode is optional and Android only -->

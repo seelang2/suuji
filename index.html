@@ -277,7 +277,7 @@
 	</section>
 
 	<section id="about" class="page">
-		<h2>About</h2>
+		<h1>About</h1>
 		<p>Author: Chris Langtiw <a href="http://www.sitebabble.com">www.sitebabble.com</a></p>
 		<p>Version: 0.2.0</p>
 	</section>
@@ -289,9 +289,9 @@
 	<section id="menu" class="page showbuttons">
 		<h1>Menu</h1>
 		<div class="centertext">
-			<p><button data-page="settings" class="btnSettings">Settings</button></p>
-			<p><button data-page="about" class="btnAbout">About</button></p>
-			<p><button data-page="stats" class="btnStats">View Stats</button></p>
+			<p><button data-page="settings" class="ui-1">Settings</button></p>
+			<p><button data-page="about" class="ui-1">About</button></p>
+			<p><button data-page="stats" class="ui-1">View Stats</button></p>
 		</div>
 	</section>
 
@@ -313,19 +313,8 @@
 		<button data-gamestart="dates" class="ui-1"><h2>Dates</h2>Dates presented as weekday, month, day</button>
 
 		<!--<h2>Time</h2>-->
-		<button data-gamestart="time" class="ui-1"><h2>Time</h2>Presented in hours and minutes in 12-hour format</button>
+		<button data-gamestart="times" class="ui-1"><h2>Times</h2>Presented in hours and minutes in 12-hour format</button>
 	</section>
-
-<!--
-	<div id="controls">
-		<button class="btnBack">Back</button>
-		<button class="btnStart">Start</button>
-		<button class="btnShowAnswer">Show Answer</button>
-		<button class="btnNext">Next</button>
-		<button class="btnQuit">Quit</button>
-		<button class="btnStats">View Stats</button>
-	</div>
--->
 
 	<footer class="centertext"></footer>
 </div><!-- wrapper -->
@@ -333,52 +322,247 @@
 <script type="text/javascript" src="lib/jquery-2.1.1.min.js"></script>
 <script type="text/javascript" src="lib/jquery.mobile-events.min.js"></script>
 <script type="text/javascript">
-
-// simple plugin to support setting visibility
-(function($) {
-	$.fn.visible = function() {
-		return this.each(function() {
-			$(this).css('visibility','visible');
-		});
-	};
-
-	$.fn.invisible = function() {
-		return this.each(function() {
-			$(this).css('visibility','hidden');
-		});
-	};
-
-})(jQuery);
-
-</script>
-<script type="text/javascript">
 $(document).ready(function() {
 
-	var data = {};
+	////////////////////////////
+	//////////// APP ///////////
+	////////////////////////////
 
-	data.stats = {
-		numbers: {
-			drillCount: 0,
-			correct: 0,
-			accuracy: 0
-		},
-		dates: {
-			drillCount: 0,
-			correct: 0,
-			accuracy: 0
-		},
-		time: {
-			drillCount: 0,
-			correct: 0,
-			accuracy: 0
+	/****
+		Set up controller App
+		This is mostly a container for holding the general App functionality,
+		such as showing pages and handling the auto back button functionality.
+		There's also a top-level button handler that launches the games, changes
+		pages and stuff.
+
+		Note that when a non-game page is shown, to initiate preprocessing of the
+		page simply add a method to App named after the page id with the suffix 
+		_before attached. The method will be called before displaying the page.
+		Likewise, a method with the suffix _after attached to the page id will 
+		be called when the back button is pressed.
+
+		When the data-action attribute is attached to a button, App.buttonHandler 
+		will either hand off the event to any running game's buttonHandler or 
+		to an App method of the same name as the action.
+	 **/
+	var App = {};
+
+	/*
+		Show a page. Also create a back button in the header automatically.
+
+		Note that currently you shouldn't reopen pages already open because it
+		doesn't manage history.
+	 */
+	App.showPage = function(page) {
+		// bail if we're trying to open the currently open page
+		if ($header.children(':first-child').attr('data-back') == page) return;
+
+		$pages
+			.filter('#' + page)
+			.css('zIndex', ++currentZ)
+			.addClass('open');
+
+		// add back button to header
+		//$header.prepend('<button data-back="'+ page +'" class="leftalign">Back</button>');
+		$('<button />')
+			.addClass('leftalign')
+			.append('Back')
+			.attr('data-back', page)
+			.css('zIndex', (100 + currentZ))
+			.prependTo($header);
+
+	}; // showPage
+
+	/****
+		Hide the topmost page
+	 **/
+	App.pageBack = function(page) {
+		$pages
+			.filter('#' + page)
+			.removeClass('open')
+			.css('zIndex', --currentZ);
+
+		// remove the first back button if present
+		var $fc = $header.children(':first-child');
+		if (typeof $fc.attr('data-back') != 'undefined') $fc.remove();
+
+		// save data
+		window.localStorage.setItem( AppID, JSON.stringify(data) );
+		
+	}; // pageBack
+
+
+	/****
+		Set up general button handler
+		This primary handler manages the basic page opening and back button 
+		functionality, as well as calling the init methods of the game objects.
+		Any other triggered events are then passed on to the running game object's
+		button handler. 
+	 **/
+	App.buttonHandler = function(e) {
+		//console.log('buttonHandler called on',this);
+
+		var $this = $(this);
+
+		switch(true) {
+			// check if gamestart present
+			case typeof $this.attr('data-gamestart') != 'undefined':
+				// show game page
+				App.showPage('game');
+				// launch game
+				GameController.games[$this.attr('data-gamestart')].init();
+			break;
+
+			// display requested page 
+			case typeof $this.attr('data-page') != 'undefined':
+				// Handle page preprocessing
+				// if there's a method name in App named after the page call it first
+				if (typeof App[$this.attr('data-page') + '_before'] == 'function')
+					App[$this.attr('data-page') + '_before']();
+				
+				// display page
+				App.showPage($this.attr('data-page'));
+			break;
+
+			// back button
+			case typeof $this.attr('data-back') != 'undefined':
+				// Handle page postprocessing
+				// if there's a method name in App named after the page call it first
+				if (typeof App[$this.attr('data-back') + '_after'] == 'function')
+					App[$this.attr('data-back') + '_after']();
+				
+				// close page
+				App.pageBack($this.attr('data-back'));
+
+				// if a game is running the game's end method should be called
+				// IF the back button is the game page
+				if (typeof GameController.running != 'undefined' && $this.attr('data-back') == 'game')
+					GameController.games[GameController.running].gameEnd();
+
+			break;
+
+			// otherwise hand off to running game buttonHandler or App method
+			default:
+				if (typeof GameController.running != 'undefined')
+					GameController.games[GameController.running].buttonHandler(e, $this);
+				else if (typeof App[$this.attr('data-action')] == 'function')
+					App[$this.attr('data-action')](e, $this);
+			break;
 		}
-	};
+
+	}; // buttonHandler
+
+	/****
+		Settings page preprocessor - called prior to displaying the page
+		Updates form settings 
+	 **/
+	App.settings_before = function() {
+		
+		var $pageInputs = $pages.filter('#settings').find(':input');
+
+		// update form on page to reflect current settings before showing page
+		// first, remove all checked properties
+		$pageInputs
+			.removeProp('checked');
+
+		// ...then reset them
+
+		// hiragana is always shown
+		//if (data.settings.showH) {
+		//	$pageInputs
+		//		.find('[name=showH]')
+		//		.prop('checked');
+		//}
+		
+		if (data.settings.showR) {
+			$pageInputs
+				.filter('[name=showR]')
+				.prop('checked',true);
+		}
+
+		$pageInputs
+			.filter('[name=showK]')
+			.filter('[value='+(data.settings.showK ? '1': '0')+']')
+			.prop('checked', true);
+
+	}; // App.settings_before
+
+	/****
+		Settings page preprocessor - called prior to displaying the page
+		Extracts the form data and saves it into the data object.
+	 **/
+	App.settings_after = function() {
+		var $page = $pages.filter('#settings');
+
+		// because the value of showK can be undefined (if the checkbox is not checked)
+		// and because the val() will return text we use parseInt() and also add the || 0
+		// (as in undefined || 0 => 0)
+		var $tmp = $page.find(':checked');
+		data.settings.showK = parseInt($tmp.filter('[name=showK]').val()) || 0;
+		data.settings.showR = parseInt($tmp.filter('[name=showR]').val()) || 0;
+
+	}; // App.settings_after
+
+	/****
+		Stats page
+
+	 **/
+	App.stats_before = function() {
+		var a = parseInt(data.stats.numbers.correct / data.stats.numbers.drillCount * 100);
+		a = isNaN(a) ? 0: a;
+
+		var text = 
+		'<h2>Numbers</h2>' + 
+		'<p>Total cards viewed: ' + data.stats.numbers.drillCount + '<br />' +
+		'Accuracy: ' + a + '%</p>';
+
+		a = parseInt(data.stats.dates.correct / data.stats.dates.drillCount * 100);
+		a = isNaN(a) ? 0: a;
+
+		text += 
+		'<h2>Dates</h2>' + 
+		'<p>Total cards viewed: ' + data.stats.dates.drillCount + '<br />' +
+		'Accuracy: ' + a + '%</p>';
+
+		a = parseInt(data.stats.times.correct / data.stats.times.drillCount * 100);
+		a = isNaN(a) ? 0: a;
+
+		text += 
+		'<h2>Times</h2>' + 
+		'<p>Total cards viewed: ' + data.stats.times.drillCount + '<br />' +
+		'Accuracy: ' + a + '%</p>';
+
+		text += '<p class="centertext"><button data-action="resetstats" data-game="numbers" class="ui-1">Reset Stats</button></p>';
+		$pages
+			.filter('#stats')
+			.html(text);
+	}; // App.stats_before
+
+	/****
+		Action handler for resetstats button (on stats page)
+		Resets stats for games
+	 **/
+	App.resetstats = function(e, $this) {
+		data.stats = defaults.stats;
+		App.stats_before();
+
+	}; // App.resetStats
+
+	////////////////////////////
+	/////////// GAME ///////////
+	////////////////////////////
+
+	/****
+		Basic Game object
+
+	 **/
+	var Game = { data: {} };
 
 	// The number data, which corresponds to the number of places in the generated number array
 	// k = Kanji, h = Hiragana, r = Romaji
 	// zero is ignored because you wouldn't say the zero place
-	data.numbers = [
-		[
+	Game.data.numbers = [
+		[ // 0
 			{k:'',		h:'',			r:''},
 			{k:'一',		h:'いち',		r:'ichi'},
 			{k:'二',		h:'に',			r:'ni'},
@@ -390,7 +574,7 @@ $(document).ready(function() {
 			{k:'八',		h:'はち',		r:'hachi'},
 			{k:'九',		h:'きゅう',		r:'kyuu'}
 		],
-		[
+		[ // 00
 			{k:'',		h:'',			r:''},
 			{k:'十',		h:'じゅう',		r:'jyuu'},
 			{k:'二十',	h:'にじゅう',		r:'nijyuu'},
@@ -402,7 +586,7 @@ $(document).ready(function() {
 			{k:'八十',	h:'はちじゅう',	r:'hachijyuu'},
 			{k:'九十',	h:'きゅうじゅう',	r:'kyuujyuu'}
 		],
-		[
+		[ // 000
 			{k:'',		h:'',			r:''},
 			{k:'百',		h:'ひゃく',		r:'hyaku'},
 			{k:'二百',	h:'にひゃく',		r:'nihyaku'},
@@ -414,7 +598,7 @@ $(document).ready(function() {
 			{k:'八百',	h:'はっぴゃく',	r:'happyaku'},
 			{k:'九百',	h:'きゅうひゃく',	r:'kyuuhyaku'}
 		],
-		[
+		[ // 0000
 			{k:'',		h:'',			r:''},
 			{k:'千',		h:'さん',		r:'sen'},
 			{k:'二千',	h:'にさん',		r:'nisen'},
@@ -426,7 +610,7 @@ $(document).ready(function() {
 			{k:'八千',	h:'はっさん',		r:'hassen'},
 			{k:'九千',	h:'きゅうさん',	r:'kyuusen'}
 		],
-		[
+		[ // 00000
 			{k:'',		h:'',			r:''},
 			{k:'万',		h:'いちま',		r:'ichiman'},
 			{k:'二万',	h:'にまん',		r:'niman'},
@@ -440,13 +624,225 @@ $(document).ready(function() {
 		]
 	];
 
+
+
+	/****
+
+	 **/
+	Game.gameEnd = function() {
+		GameController.running = '';
+
+		$question.empty();
+		$answer.empty();
+		$footer.empty();
+
+	}; // Game.gameEnd
+
+	/****
+
+	 **/
+	Game.buttonHandler = function(e, $this) {
+		//console.log('Game.buttonHandler called on',$this);
+
+		switch($this.attr('data-action')) {
+			case 'showanswer':
+				// reveal answer
+				$answer.addClass('reveal');
+				// change control buttons
+				$footer
+					.empty()
+					.append('<button class="ui-2" data-action="tallywrong">Wrong</button>')
+					.append('<button class="ui-2" data-action="tallyright">Right</button>');
+			break;
+
+			case 'tallyright':
+				data.stats[GameController.running].correct++;
+			case 'tallywrong':
+				data.stats[GameController.running].drillCount++;
+				// get next card
+				this.nextCard();
+			break;
+
+			default:
+				// hand off to instance method
+				this[$this.attr('data-action')](e, $this);
+			break;
+		} // switch
+	}; // Game.buttonHandler
+
+	/****
+		showNextCard() - interface placeholder
+	 **/
+	Game.getNewCard = function() {
+		// this method should be overridden by Game instances
+		// or possibly set this up to be called by the instance's getNewCard method
+	}; // Game.getNewCard
+
+	/****
+		nextCard() - general answer display
+		Instances can override this if necessary
+	 **/
+	Game.nextCard = function() {
+
+		this.getNewCard();
+
+		$footer
+			.empty()
+			.append('<button class="ui-1" data-action="showanswer">Show Answer</button>');
+
+	}; // Game.nextCard
+
+
+	/****
+		GameController
+		The GameController object simply keeps track of which game is running
+		and maintains a reference to the game instance so that game methods
+		can be called externally, mainly from the app buttonHandler method.
+	 **/
+	var GameController = {}; // init games container
+	GameController.running = undefined;
+	GameController.games = [];
+
+
+	////////////////////////////
+	///////// NUMBERS //////////
+	////////////////////////////
+
+	var Numbers = Object.create(Game);
+	// register game with GameController
+	GameController.games['numbers'] = Numbers;
+	
+	/****
+
+	 **/
+	Numbers.init = function() {
+		GameController.running = 'numbers';
+
+		this.nextCard();
+
+
+	}; // Numbers.init
+
+	/****
+
+	 **/
+	Numbers.getNewCard = function() {
+		var numData = this.getNumberData();
+
+		var text = data.settings.showK ? 
+			'<article>' + numData.qK + '</article>' : 
+			'<article>' + numData.str + '</article>';
+
+		$question
+			.empty()
+			.append(text)
+			.show();
+
+		text = '<p class="hiragana">' + numData.ansH + '</p>';
+		if (data.settings.showR) text += '<p class="romaji">' + numData.ansR + '</p>';
+
+		$answer
+			.empty()
+			.removeClass('reveal')
+			.append(text);
+
+
+	}; // Numbers.getNewCard
+
+	/****
+
+
+	 **/
+	Numbers.makeNewNumber = function() {
+		// generate new number as array of places between 1 to 5 places inclusive
+		// note that the array will be in reverse order (32767 -> [7,6,7,2,3])
+
+		// determine number of places
+		do {
+			var places = Math.abs(Math.floor((Math.random() * 10) - 4));				
+		} while (places == 0);
+
+		var numArray = [];
+
+		// generate random digit 0 - 9 for each place
+		for (var c = 0; c < places; c++) {
+			do {
+				var n = Math.abs(Math.floor((Math.random() * 10) - 4));
+			} while (c == (places - 1) && n == 0);
+
+			numArray.push(n);
+		}
+
+		return numArray; // return array
+	}; // Numbers.makeNewNumber
+
+	/****
+
+	 **/
+	Numbers.getNumberData = function() {
+		// generate a number. If the generated number is in the generator history regenerate
+		do {
+			var numArr = this.makeNewNumber();
+			var tmp = numArr.concat().reverse().join('');
+		} while (numberHistory.indexOf(tmp) != -1);
+
+		// maintain number history and prune when limit is reached
+		numberHistory.push(tmp);
+		if (numberHistory.length > settings.numberLimit) numberHistory.shift();
+
+		var numData = {};
+		numData.src = numArr;
+		numData.str = tmp;
+		numData.qK = '';
+		numData.ansR = '';
+		numData.ansH = '';
+
+		for (var c = 0; c < numArr.length; c++) {
+			//numData.str = numArr[c] + numData.str; // build number string
+			numData.qK = this.data.numbers[c][numArr[c]].k + numData.qK; // build kanji
+			numData.ansH = this.data.numbers[c][numArr[c]].h + ' ' + numData.ansH; // build hiragana
+			numData.ansR = this.data.numbers[c][numArr[c]].r + ' ' + numData.ansR; // build romaji
+		}
+
+		return numData;
+	}; // Numbers.getNumberData
+
+
+
+
+	////////////////////////////
+	////////// DATES ///////////
+	////////////////////////////
+
+	var Dates = Object.create(Game);
+	// register game with GameController
+	GameController.games['dates'] = Dates;
+	
+	/****
+
+	 **/
+	Dates.init = function() {
+		GameController.running = 'dates';
+
+		this.nextCard();
+
+
+	}; // games.numbers.init
+
+	/****
+
+	 **/
+	Dates.getNewCard = function() {
+
+	}; // Dates.getNewCard
+
 	/****
 		The following data tables are exception based. If the target number
 		is in the exception list, use the exception given, otherwise use 
 		the standard number and suffix.　The Kanji versions all use arabic
 		numerals plus the standard kanji, so no kanji is given below.
 	 **/
-	data.datetime = {
+	Dates.data.datetime = {
 		month: { // 月　がつ　gatsu
 			'3':  {k:'',		h:'よがつ',			r:'yogatsu'},		// 4
 			'6':  {k:'',		h:'しちがつ',			r:'shichigatsu'},	// 7
@@ -488,6 +884,7 @@ $(document).ready(function() {
 		/*
 			Ok, instead of a table I'm gonna try writing the logic directly for the 
 			minutes.
+			4 = yo; 7 = shichi; 9 = ku
 			1, 3, 4, 6, 8, 10(0) uses pun instead of fun
 			1, 6, 8, 10(0) written as -ppun
 			other numbers are standard
@@ -498,374 +895,101 @@ $(document).ready(function() {
 		]
 	};
 
-	/****
 
-	 **/
-	var makeNewNumber = function() {
-		// generate new number as array of places between 1 to 5 places inclusive
-		// note that the array will be in reverse order (32767 -> [7,6,7,2,3])
+	////////////////////////////
+	////////// TIMES ///////////
+	////////////////////////////
 
-		// determine number of places
-		do {
-			var places = Math.abs(Math.floor((Math.random() * 10) - 4));				
-		} while (places == 0);
-
-		var numArray = [];
-
-		// generate random digit 0 - 9 for each place
-		for (var c = 0; c < places; c++) {
-			do {
-				var n = Math.abs(Math.floor((Math.random() * 10) - 4));
-			} while (c == (places - 1) && n == 0);
-
-			numArray.push(n);
-		}
-
-		return numArray; // return array
-	}; // makeNewNumber
-
-	/****
-
-	 **/
-	var getNumberData = function() {
-		// generate a number. If the generated number is in the generator history regenerate
-		do {
-			var numArr = makeNewNumber();
-			var tmp = numArr.concat().reverse().join('');
-		} while (numberHistory.indexOf(tmp) != -1);
-
-		// maintain number history and prune when limit is reached
-		numberHistory.push(tmp);
-		if (numberHistory.length > settings.numberLimit) numberHistory.shift();
-
-		var numData = {};
-		numData.src = numArr;
-		numData.str = tmp;
-		numData.qK = '';
-		numData.ansR = '';
-		numData.ansH = '';
-
-		for (var c = 0; c < numArr.length; c++) {
-			//numData.str = numArr[c] + numData.str; // build number string
-			numData.qK = data.numbers[c][numArr[c]].k + numData.qK; // build kanji
-			numData.ansH = data.numbers[c][numArr[c]].h + ' ' + numData.ansH; // build hiragana
-			numData.ansR = data.numbers[c][numArr[c]].r + ' ' + numData.ansR; // build romaji
-		}
-
-		return numData;
-	}; // getNumberData
-
-	/*
-		Show a page. Also create a back button in the header automatically
-		Note that currently you shouldn't reopen pages already open because it
-		doesn't manage history
-	 */
-	var showPage = function(page) {
-		// bail if we're trying to open the currently open page
-		if ($header.children(':first-child').attr('data-back') == page) return;
-
-		$pages
-			.filter('#' + page)
-			.css('zIndex', ++currentZ)
-			.addClass('open');
-
-		// add back button to header
-		//$header.prepend('<button data-back="'+ page +'" class="leftalign">Back</button>');
-		$('<button />')
-			.addClass('leftalign')
-			.append('Back')
-			.attr('data-back', page)
-			.css('zIndex', (100 + currentZ))
-			.prependTo($header);
-
-	}; // showPage
-
-	/****
-
-	 **/
-	var pageBack = function(page) {
-		$pages
-			.filter('#' + page)
-			.removeClass('open')
-			.css('zIndex', --currentZ);
-
-		// remove the first back button if present
-		var $fc = $header.children(':first-child');
-		if (typeof $fc.attr('data-back') != 'undefined') $fc.remove();
-
-	}; // pageBack
-
-
-	/****
-		Set up general button handler
-		This primary handler manages the basic page opening and back button 
-		functionality, as well as calling the init methods of the game objects.
-		Any other triggered events are then passed on to the running game object's
-		button handler. 
-	 **/
-	var buttonHandler = function(e) {
-		console.log('buttonHandler called on',this);
-
-		var $this = $(this);
-
-		switch(true) {
-			// check if gamestart present
-			case typeof $this.attr('data-gamestart') != 'undefined':
-				// launch game
-				games[$this.attr('data-gamestart')].init();
-			break;
-
-			// display requested page 
-			case typeof $this.attr('data-page') != 'undefined':
-				// display page
-				showPage($this.attr('data-page'));
-			break;
-
-			// back button
-			case typeof $this.attr('data-back') != 'undefined':
-				// close page
-				pageBack($this.attr('data-back'));
-
-				// if a game is running the game's end method should be called
-				// IF the back button is the game page
-				if (typeof games.running != 'undefined' && $this.attr('data-back') == 'game')
-					games[games.running].gameEnd();
-
-			break;
-
-			// otherwise hand off to running game buttonHandler
-			default:
-				if (typeof games.running != 'undefined')
-					games[games.running].buttonHandler(e, $this);
-			break;
-		}
-
-	}; // buttonHandler
-
-	var games = {}; // init games container
-	games.running = undefined;
-
-	/****
-		Numbers
-
-	 **/
-	games.numbers = {};
+	var Times = Object.create(Game);
+	// register game with GameController
+	GameController.games['times'] = Times;
 	
 	/****
 
 	 **/
-	games.numbers.init = function() {
-		games.running = 'numbers';
+	Times.init = function() {
+		GameController.running = 'times';
 
-		showPage('game');
 		this.nextCard();
 
 
-	}; // games.numbers.init
+	}; // Times.init
 
 	/****
 
 	 **/
-	games.numbers.gameEnd = function() {
-		games.running = '';
+	Times.getNewCard = function() {
 
-		$question.empty();
-		$answer.empty();
-
-	}; // games.numbers.init
-
-	/****
-
-	 **/
-	games.numbers.buttonHandler = function(e, $this) {
-		console.log('numbers.buttonHandler called on',$this);
-
-		switch($this.attr('data-action')) {
-			case 'showanswer':
-				// reveal answer
-				$answer.addClass('reveal');
-				// change control buttons
-				$footer
-					.empty()
-					.append('<button class="ui-2" data-action="tallyright">Right</button>')
-					.append('<button class="ui-2" data-action="tallywrong">Wrong</button>');
-			break;
-
-			case 'tallyright':
-			case 'tallywrong':
-				// get next card
-				this.nextCard();
-			break;
-
-		} // switch
-	}; // games.numbers.buttonHandler
-
-	/****
-
-	 **/
-	games.numbers.showNewCard = function() {
-		var numData = getNumberData();
-
-		var text = settings.showK ? 
-			'<article>' + numData.qK + '</article>' : 
-			'<article>' + numData.str + '</article>';
-
-		$question
-			.empty()
-			.append(text)
-			.show();
-
-		text = '<p class="hiragana">' + numData.ansH + '</p>';
-		if (settings.showR) text += '<p class="romaji">' + numData.ansR + '</p>';
-
-		$answer
-			.empty()
-			.removeClass('reveal')
-			.append(text);
+	}; // Times.getNewCard
 
 
-	}; // showNewCard
 
-	/****
 
-	 **/
-	games.numbers.nextCard = function() {
+	////////////////////////////
+	///////// APP INIT /////////
+	////////////////////////////
 
-		this.showNewCard();
+	var AppID = 'com.cll-suuji.app'; // ideally should match id parameter in config.xml for consistency
 
-		$footer
-			.empty()
-			.append('<button class="ui-1" data-action="showanswer">Show Answer</button>');
-
-	}; // games.numbers.nextCard
-
-	/*
-
-	// set up controls
-	$('#wrapper')
-		.on(
-			'click',
-			'button',
-			function(e) {
-				
-				switch(true) {
-					case $(this).hasClass('btnStart'):
-						showPage('card');
-					//break;
-					
-					case $(this).hasClass('btnNext'):
-						showNewCard();
-						$button.all
-							.filter('.btnNext')
-							.hide()
-							.end()
-							.filter('.btnShowAnswer')
-							.show();
-					break;
-					
-					case $(this).hasClass('btnSettings'):
-						// update form on page to reflect current settings before showing page
-						// first, remove all checked properties
-						$page.all
-							.filter('#settings')
-							.find(':checked')
-							.removeProp('checked');
-
-						// ...then reset them
-
-						// hiragana is always shown
-						//if (settings.showH) {
-						//	$page.all
-						//		.filter('#settings')
-						//		.find('[name=showH]')
-						//		.prop('checked');
-						//}
-						
-
-						if (settings.showR) {
-							$page.all
-								.filter('#settings')
-								.find('[name=showR]')
-								.prop('checked');
-						}
-
-						if (settings.showK) {
-							$page.all
-								.filter('#settings')
-								.find('[name=showK]')
-								.filter('[value=1]')
-								.prop('checked');
-						}
-
-						showPage('settings');
-					break;
-					
-					case $(this).hasClass('btnStats'):
-						showPage('stats');
-					break;
-					
-					case $(this).hasClass('btnAbout'):
-						showPage('about');
-					break;
-					
-					case $(this).hasClass('btnBack'):
-						// if we're on the settings page save form values
-						if ($page.history[$page.history.length - 1] == 'settings') {
-							//reset settings
-							settings.showK = 0;
-							//settings.showH = 0;
-							settings.showR = 0;
-
-							$('#settingsform')
-								.find(':checked')
-								.each(function() {
-									$this = $(this);
-									// using parseInt() to force numeric values
-									switch(true) {
-										case $this.attr('name') == 'showK':
-											settings.showK = parseInt($this.val());
-										break;
-										
-										//case $this.attr('name') == 'showH':
-										//	settings.showH = parseInt($this.val());
-										//break;
-										
-										case $this.attr('name') == 'showR':
-											settings.showR = parseInt($this.val());
-										break;
-									}
-								 });
-
-						}
-
-						pageBack();
-					break;
-					
-					case $(this).hasClass('btnShowAnswer'):
-						$answer.visible();
-						$button.all
-							.filter('.btnShowAnswer')
-							.hide()
-							.end()
-							.filter('.btnNext')
-							.show();
-					break;
-					
-					case $(this).hasClass('btnQuit'):
-						$page.history = []; // clear history
-						showPage('home'); // go to home page
-					break;
-					
-				}
+	var defaults = {
+		version: '0.3.0',
+		stats: {
+			numbers: {
+				drillCount: 0,
+				correct: 0,
+				accuracy: 0
+			},
+			dates: {
+				drillCount: 0,
+				correct: 0,
+				accuracy: 0
+			},
+			times: {
+				drillCount: 0,
+				correct: 0,
+				accuracy: 0
 			}
-		 );
-	*/
+		},
+		settings: {
+			numberLimit: 	25, // track generated number history to avoid duplicates within set limit
+			showK: 			0,  // display Kanji in question
+			//showH: 			1,  // display hiragana answer
+			showR: 			1	// display romaji answer
+		}
+	}
 
-	// init app
+	// initialize general data object
+	var data = {};
+
+	// initialize localStorage
+	if (typeof window.Storage == 'undefined') {
+		// no localStorage object available; create the object
+		window.localStorage = {};
+		data = $.extend({}, defaults);
+	} else {
+		// localStorage available, initialize or retrieve data
+		if (typeof window.localStorage[AppID] != 'undefined') {
+			data = JSON.parse(window.localStorage.getItem(AppID));
+		} else {
+			// first time running app, init app data property
+			data = $.extend({}, defaults);
+			window.localStorage.setItem( AppID, JSON.stringify(data) );
+		} // catch
+
+		// check data structure version and update if necessary
+		// yes, this is currently destructive and existing data is lost
+		if (typeof data.version == 'undefined' || data.version != '0.3.0') {
+			data = $.extend({}, defaults);
+			window.localStorage.setItem( AppID, JSON.stringify(data) );
+		}
+
+	} // else
+
+
 	var $header = $('#wrapper > header');
 	var $footer = $('#wrapper > footer');
 
-	var $pages = $('.page');
+	var $pages = $('.page'); // container for all pages
 
 	var $question = $('.question');
 	var $answer = $('.answer');
@@ -875,12 +999,6 @@ $(document).ready(function() {
 	var numberHistory = []; // array for tracking last x generated numbers, where x = settings.numberLimit
 
 
-	var settings = {
-		numberLimit: 	25, // track generated number history to avoid duplicates within set limit
-		showK: 			0,  // display Kanji in question
-		//showH: 			1,  // display hiragana answer
-		showR: 			1	// display romaji answer
-	};
 
 	/*
 	// intialize Hammer library
@@ -897,7 +1015,7 @@ $(document).ready(function() {
 		.on(
 			'tap',
 			'button, .button',
-			buttonHandler
+			App.buttonHandler
 		 );
 
 
