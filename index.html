@@ -858,15 +858,17 @@ $(document).ready(function() {
 
 	 **/
 	Dates.getNewCard = function() {
+		var text = '<h2>これは　何月　何日　何曜日　ですか：</h2>';
+
 		// generate new date
 		var dateData = this.getDateData();
-		console.log(dateData);
+		//console.log(dateData);
 
 		// build 
 
-		var text = data.settings.showK ? 
+		var text = text + (data.settings.showK ? 
 			'<article>' + dateData.qK + '</article>' : 
-			'<article>' + dateData.str + '</article>';
+			'<article>' + dateData.str + '</article>');
 
 
 		$question
@@ -914,7 +916,7 @@ $(document).ready(function() {
 			this.data.datetime.weekday[dateVal.getDay()].k;
 
 		
-		console.log(this.numToArray(dateVal.getFullYear()));
+		//console.log(this.numToArray(dateVal.getFullYear()));
 
 		// set up year
 		var tmp = this.getNumberData(this.numToArray(dateVal.getFullYear()));
@@ -986,26 +988,6 @@ $(document).ready(function() {
 			{k:'木曜日',		h:'もくようび',		r:'mokuyoubi', 		e:'Thursday'}, 	// Thu
 			{k:'金曜日',		h:'きにょうび',		r:'kinyoubi', 		e:'Friday'}, 	// Fri
 			{k:'土曜日',		h:'どようび',			r:'doyoubi', 		e:'Saturday'} 	// Sat
-		],
-
-		hour: { // 時 ji
-			'3':  {k:'',		h:'よじ',			r:'yoji'},			// 4
-			'6':  {k:'',		h:'しじ',			r:'shichiji'},		// 7
-			'8':  {k:'',		h:'くじ',			r:'kuji'}			// 9
-		},
-
-		/*
-			Ok, instead of a table I'm gonna try writing the logic directly for the 
-			minutes.
-			4 = yo; 7 = shichi; 9 = ku
-			1, 3, 4, 6, 8, 10(0) uses pun instead of fun
-			1, 6, 8, 10(0) written as -ppun
-			30 uses han (half-past)
-			other numbers are standard
-		*/
-		minute: [　// 分 fun/pun
-			//{k:'',		h:'',			r:''}, 		// 0
-
 		]
 	};
 
@@ -1031,6 +1013,20 @@ $(document).ready(function() {
 
 	/****
 
+		Ok, instead of a table I'm gonna try writing the logic directly for the 
+		hours and minutes.
+
+		hours = 時 ji
+		minutes = 分 fun/pun
+
+		hours and minutes exceptions
+		4 = yo; 7 = shichi; 9 = ku
+		
+		minutes additional exceptions
+		1, 3, 4, 6, 8, 10(0) uses pun instead of fun
+		1, 6, 8, 10(0) written as -ppun
+		30 uses han (half-past)
+		other numbers are standard
 	 **/
 	Times.getNewCard = function() {
 
